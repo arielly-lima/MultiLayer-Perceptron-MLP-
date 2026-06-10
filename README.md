@@ -36,3 +36,7 @@ E, para saída:
 ``W3.shape = (64,10)
 b3.shape = (1,10)``
 
+- 3. Para inicialização foi usado Inicialização de He
+- Mantém a variância estável ao longo das camadas.
+- Por isso é a escolha padrão para ReLU.
+
