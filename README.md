@@ -40,3 +40,4 @@ b3.shape = (1,10)``
 - Mantém a variância estável ao longo das camadas.
 - Por isso é a escolha padrão para ReLU.
 
+- 4. Decisão pelo uso de classes

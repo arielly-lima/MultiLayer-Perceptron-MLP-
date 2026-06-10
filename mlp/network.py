@@ -1,48 +1,69 @@
 import numpy as np
-from torch import softmax
 from keras.datasets import mnist
+from activations import relu, softmax
 
-# Array com o número de neurônios em cada camada (input, hidden1, hidden2, output)
+
+# Carrega o dataset MNIST
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+print(X_train.shape)
+print(y_train.shape)
+
+print(X_test.shape)
+print(y_test.shape)
+
+
+# Pré-processamento
+X_train = X_train.reshape(-1, 784).astype(np.float32)
+X_test = X_test.reshape(-1, 784).astype(np.float32)
+
+X_train /= 255.0
+X_test /= 255.0
+
+
+# array de camadas da rede (input, hidden1, hidden2, output)
 layers = [784, 128, 64, 10]
 
-# Listas para armazenar os pesos e biases de cada camada
-weights = []
-biases = []
+# Classe da Rede Neural
+class NeuralNetwork:
+    # Inicialização da rede com pesos e biases
+    def __init__(self, layers):
 
-# Inicialização dos pesos e biases
-for i in range(len(layers) - 1):    
-    # Inicialização dos pesos para a camada i usando a técnica de He (He initialization)
-    W = np.random.randn(
-        layers[i],
-        layers[i+1]
-    ) * np.sqrt(2 / layers[i])
+        self.layers = layers
+        self.weights = []
+        self.biases = []
 
-    # Inicialização dos biases para a camada i como zeros
-    b = np.zeros((1, layers[i+1]))
+        # inicialização dos pesos e biases
+        for i in range(len(layers) - 1):
 
-    weights.append(W)
-    biases.append(b)
-    
+            W = np.random.randn(
+                layers[i],
+                layers[i + 1]
+            ) * np.sqrt(2 / layers[i])
 
-# Foward pass
-def forward(X, weights, biases):
+            b = np.zeros((1, layers[i + 1]))
 
-    activations = [X]
-    zs = []
+            self.weights.append(W)
+            self.biases.append(b)
 
-    A = X
-    # Para cada camada, calculamos a saída linear (Z) e aplicamos a função de ativação
-    for i in range(len(weights)):
+    # Propagação para frente (forward pass)
+    def forward(self, X):
 
-        Z = A @ weights[i] + biases[i]
+        A = X
+        self.activations = [X]
+        self.zs = []
 
-        zs.append(Z)
-        # Para a última camada, usamos softmax para gerar probabilidades, caso contrário, usamos ReLU
-        if i == len(weights) - 1:
-            A = softmax(Z)
-        else:
-            A = relu(Z)
+        # Para cada camada, calculamos Z = A @ W + b e depois aplicamos a função de ativação
+        for i in range(len(self.weights)):
 
-        activations.append(A)
+            Z = A @ self.weights[i] + self.biases[i]
+            self.zs.append(Z)
 
-    return activations, zs
+            if i == len(self.weights) - 1:
+                A = softmax(Z)
+            else:
+                A = relu(Z)
+
+            self.activations.append(A)
+
+        return A

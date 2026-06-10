@@ -2,6 +2,11 @@
 def relu(x):
     return np.maximum(0, x)
 
+
+def relu_derivative(x):
+    return (x > 0).astype(float)
+
+
 # Função softmax para a camada de saída - gerar probabilidades
 def softmax(x):
 
@@ -14,4 +19,3 @@ def softmax(x):
         axis=1,
         keepdims=True
     )
-
