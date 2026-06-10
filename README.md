@@ -1,4 +1,4 @@
-# MLP - Classificação de Dígitos (MNIST)
+﻿# MLP - Classificação de Dígitos (MNIST)
 
 ## Visão geral do projeto
 O projeto contempla a implementação de um Multi-Layer Perceptron do zero em NumPy para classificar dígitos do MNIST. O foco é entender o funcionamento interno da rede e não depender de frameworks de deep learning.
@@ -621,3 +621,6 @@ Foi testado a mudança no learning rate
 
 ---
 
+- quando rodei o ADAM, a curva apresentou um comportamento estranho, pois o experimento não estava passando o lr certo para train_model.
+O config-4-adam estava definido com lr=0.001, mas o train_model() não recebia lr=config["lr"].
+Isso fazia o Adam treinar com a taxa padrão 0.03, o que pode gerar curvas estranhas e instabilidade.

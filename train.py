@@ -145,6 +145,11 @@ def train_model(
             f"val_loss={val_loss:.4f} val_acc={val_acc:.4f} | "
             f"{elapsed:.1f}s"
         )
+
+        if not np.isfinite(train_loss) or not np.isfinite(val_loss):
+            print("Perda divergiu para NaN/inf; interrompendo o treinamento deste experimento.")
+            break
+
     return history
 
 # Função para plotar os gráficos de perda e acurácia para comparação entre diferentes configurações de treinamento
@@ -222,7 +227,7 @@ def run_experiments():
         {
             "label": "config-3",
             "layers": [784, 128, 64, 10],
-            "lr": 0.04,
+            "lr": 0.03,
             "epochs": 20,
             "batch_size": 128,
         },
@@ -248,11 +253,14 @@ def run_experiments():
             optimizer=config.get("optimizer", "sgd"),
         )
         history = train_model(
-                model,
-                X_train,
-                y_train_onehot,
-                X_val,
-                y_val_onehot,
+            model,
+            X_train,
+            y_train_onehot,
+            X_val,
+            y_val_onehot,
+            epochs=config.get("epochs", 20),
+            lr=config.get("lr", 0.03),
+            batch_size=config.get("batch_size", 128),
         )
         histories.append(history)
         test_loss, test_acc = model.evaluate(X_test, y_test_onehot)
