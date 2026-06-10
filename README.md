@@ -278,13 +278,13 @@ Os experimentos foram executados em duas rodadas. A primeira revelou dois bugs q
 
 **Loss por época:**
 
-![Loss por época — rodada 1](results/loss_comparacao.png)
+![Loss por época — rodada 1](results/loss_comparacao_1.png)
 
 O `config-3` (roxo) apresenta oscilação crescente a partir da época 10 — sinal inicial da instabilidade acumulada antes do colapso. O Adam (rosa) mostra queda de loss extremamente rápida com train loss próxima de zero, mas val loss bem acima, o que já indicava que o lr=0.03 era inadequado para Adam.
 
 **Acurácia por época:**
 
-![Acurácia por época — rodada 1](results/acc_comparacao.png)
+![Acurácia por época — rodada 1](results/acc_comparacao_1.png)
 
 O efeito do `lr=0.04` no `config-3` é visível na queda vertical de ~97% para ~10% na época 15 — o equivalente a chute aleatório entre 10 classes. Quando os pesos explodem, o Softmax passa a receber logits com magnitudes enormes, produz `NaN`, e a rede trava em predições degeneradas. A queda comprime o eixo Y do gráfico inteiro e faz as curvas do Adam parecerem anômalas, mesmo o Adam não sendo o problema nesse momento.
 
@@ -311,13 +311,13 @@ Duas correções foram aplicadas:
 
 **Loss por época:**
 
-![Loss por época — rodada 2](results/loss_comparacao_corrigido.png)
+![Loss por época — rodada 2](results/loss_comparacao_2.png)
 
 Com os parâmetros corrigidos, todas as configurações convergem sem oscilação. O Adam (rosa) ainda desce muito mais rápido que o SGD — train loss próxima de zero antes da época 10 — mas agora a val loss acompanha de forma mais coerente, com gap menor que na rodada 1.
 
 **Acurácia por época:**
 
-![Acurácia por época — rodada 2](results/acc_comparacao_corrigido.png)
+![Acurácia por época — rodada 2](results/acc_comparacao_2.png)
 
 Sem o colapso do config-3, o gráfico revela o comportamento real de cada configuração. O Adam sobe para ~99% de acurácia no treino rapidamente, mas a val acc fica em torno de 97–98%, indicando que a rede memorizou mais do que generalizou. As configurações com SGD sobem de forma mais gradual e a diferença entre train e val é menor, o que é um sinal mais saudável.
 
