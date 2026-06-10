@@ -4,7 +4,7 @@ import numpy as np
 def relu(x):
     return np.maximum(0, x)
 
-
+# Derivada da ReLU para retropropagação
 def relu_derivative(x):
     return (x > 0).astype(float)
 

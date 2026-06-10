@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from mlp import NeuralNetwork
 from mlp.losses import cross_entropy
 
+# Verificar se matplotlib está disponível para plotagem
 try:
     import matplotlib.pyplot as plt
     HAS_MATPLOTLIB = True
@@ -13,12 +14,13 @@ except ImportError:
     HAS_MATPLOTLIB = False
 
 
+# Função para converter rótulos inteiros em codificação one-hot
 def one_hot(labels, num_classes=10):
     encoded = np.zeros((labels.shape[0], num_classes), dtype=np.float32)
     encoded[np.arange(labels.shape[0]), labels] = 1.0
     return encoded
 
-
+# Função para carregar o dataset MNIST, normalizar os dados e dividir em conjuntos de treinamento e teste
 def load_mnist(test_size=10000, random_state=42):
     mnist = fetch_openml("mnist_784", version=1, as_frame=False)
     X = mnist["data"].astype(np.float32) / 255.0
@@ -33,7 +35,7 @@ def load_mnist(test_size=10000, random_state=42):
     )
     return X_train, X_test, y_train, y_test
 
-
+# Gerador de batches para treinamento em mini-batches
 def batch_generator(X, y, batch_size=128):
     n = X.shape[0]
     perm = np.random.permutation(n)
@@ -42,6 +44,7 @@ def batch_generator(X, y, batch_size=128):
         yield X[indices], y[indices]
 
 
+# Função para treinar o modelo MLP usando o dataset MNIST, avaliando a perda e a acurácia em cada época
 def train_model(
     model,
     X_train,
@@ -82,7 +85,7 @@ def train_model(
         )
     return history
 
-
+# Função para plotar os gráficos de perda e acurácia para comparação entre diferentes configurações de treinamento
 def plot_history(history_list, labels, output_dir="results"):
     os.makedirs(output_dir, exist_ok=True)
     if not HAS_MATPLOTLIB:
@@ -118,7 +121,7 @@ def plot_history(history_list, labels, output_dir="results"):
     plt.close()
     print(f"Gráficos salvos em {output_dir}")
 
-
+# Função principal para executar os experimentos de treinamento com diferentes configurações de camadas, taxa de aprendizado e número de épocas, avaliando o desempenho final do modelo em cada configuração
 def run_experiments():
     print("Carregando MNIST...")
     X_train, X_test, y_train, y_test = load_mnist()
@@ -137,7 +140,14 @@ def run_experiments():
         {
             "label": "config-2",
             "layers": [784, 256, 128, 10],
-            "lr": 0.03,
+            "lr": 0.02,
+            "epochs": 20,
+            "batch_size": 128,
+        },
+        {
+            "label": "config-3",
+            "layers": [784, 128, 64, 10],
+            "lr": 0.04,
             "epochs": 20,
             "batch_size": 128,
         },
@@ -145,7 +155,7 @@ def run_experiments():
 
     histories = []
     final_scores = []
-
+    # Executar cada configuração de experimento, treinando o modelo e avaliando o desempenho final em termos de perda e acurácia no conjunto de teste
     for config in experiments:
         print("\n" + "=" * 60)
         print(f"Treinando {config['label']} | camadas={config['layers']} lr={config['lr']}\n")
