@@ -14,3 +14,25 @@ O problema do perceptron e a necessidade de adicionar camadas à rede, torna o M
 
 (0,0) -> 0
 (1,1) -> 0``
+
+- 2. decisão das camadas:
+Como as imagens do MNIST possuem 28x28 pixels, foram escolhidos 784 pixels de entrada
+As dimensões que são criadas com arrays numpy, ficam assim:
+W.shape = (neurônios da camada atual,
+           neurônios da próxima camada)
+
+Dessa forma, podemos achatar cada imagem assim:
+``(28,28)``
+
+A primeira camada oculta foi selecionado 128 neurônios/pesos
+``W1.shape = (784,128)
+b1.shape = (1,128)``
+
+Já a segunda camada possui 64 neurônios/pesos
+``W2.shape = (128,64)
+b2.shape = (1,64)``
+
+E, para saída:
+``W3.shape = (64,10)
+b3.shape = (1,10)``
+
