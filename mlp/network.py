@@ -1,6 +1,7 @@
 import numpy as np
 from keras.datasets import mnist
 from activations import relu, softmax
+from losses import cross_entropy_derivative
 
 
 # Carrega o dataset MNIST
@@ -11,7 +12,6 @@ print(y_train.shape)
 
 print(X_test.shape)
 print(y_test.shape)
-
 
 # Pré-processamento
 X_train = X_train.reshape(-1, 784).astype(np.float32)
@@ -67,3 +67,35 @@ class NeuralNetwork:
             self.activations.append(A)
 
         return A
+    
+# Função backpropagation (retropropagação do erro)
+    def backward(self, X, y, lr=0.01):
+
+        m = y.shape[0]
+
+        # gradiente da saída (softmax + cross entropy)
+        dZ = self.A[-1] - y
+
+        dW = dZ.T @ self.A[-2] / m
+        db = np.sum(dZ, axis=0, keepdims=True) / m
+
+        grads_W = [dW]
+        grads_b = [db]
+
+        # propagação para trás
+        for i in reversed(range(len(self.weights) - 1)):
+
+            dA = dZ @ self.weights[i + 1].T
+            dZ = dA * relu_derivative(self.Z[i])
+
+            dW = dZ.T @ self.A[i] / m
+            db = np.sum(dZ, axis=0, keepdims=True) / m
+
+            grads_W.insert(0, dW)
+            grads_b.insert(0, db)
+
+        # atualização dos pesos (SGD)
+        for i in range(len(self.weights)):
+
+            self.weights[i] -= lr * grads_W[i]
+            self.biases[i] -= lr * grads_b[i]
