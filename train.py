@@ -1,9 +1,13 @@
+import gzip
 import os
+import ssl
+import struct
 import time
+import urllib.request
+
 import numpy as np
 from mlp import NeuralNetwork
 from mlp.losses import cross_entropy
-from keras.datasets import mnist
 
 # Verificar se matplotlib está disponível para plotagem
 try:
@@ -20,23 +24,61 @@ def one_hot(labels, num_classes=10):
     encoded[np.arange(labels.shape[0]), labels] = 1.0
     return encoded
 
-# Função para carregar e pré-processar o dataset MNIST
-def load_mnist():
+# Função para baixar arquivos do MNIST se não estiverem presentes localmente, garantindo que os dados estejam disponíveis para treinamento
+def download_file(url, path):
+    if os.path.exists(path):
+        return
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    try:
+        urllib.request.urlretrieve(url, path)
+    except Exception:
+        context = ssl._create_unverified_context()
+        urllib.request.urlretrieve(url, path, context=context)
 
-    # Carrega o dataset MNIST via Keras
-    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+# Função para ler arquivos IDX compactados do MNIST, convertendo-os em arrays numpy para uso no treinamento e avaliação do modelo
+def read_idx_gz(path):
+    with gzip.open(path, "rb") as f:
+        magic = int.from_bytes(f.read(4), "big")
+        num_dims = magic & 0xFF
+        shape = tuple(int.from_bytes(f.read(4), "big") for _ in range(num_dims))
+        data = np.frombuffer(f.read(), dtype=np.uint8)
+    return data.reshape(shape)
 
-    # Converter imagens 28x28 para vetores de 784 pixels
-    X_train = X_train.reshape(-1, 28 * 28).astype(np.float32)
-    X_test = X_test.reshape(-1, 28 * 28).astype(np.float32)
 
-    # Normalização dos pixels para o intervalo [0,1]
-    X_train /= 255.0
-    X_test /= 255.0
+# Função para carregar o dataset MNIST via keras.datasets.mnist ou arquivo raw
+# Retorna X_train, X_test, y_train, y_test no formato esperado pelo modelo.
+def load_mnist(test_size=10000, random_state=42):
+    try:
+        from keras.datasets import mnist as keras_mnist
+    except Exception:
+        keras_mnist = None
 
+    if keras_mnist is not None:
+        (X_train, y_train), (X_test, y_test) = keras_mnist.load_data()
+    else:
+        # Baixar e ler os arquivos IDX compactados do MNIST se keras não estiver disponível
+        base_url = "https://storage.googleapis.com/cvdf-datasets/mnist/"
+        data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "mnist")
+        files = {
+            "train-images-idx3-ubyte.gz": base_url + "train-images-idx3-ubyte.gz",
+            "train-labels-idx1-ubyte.gz": base_url + "train-labels-idx1-ubyte.gz",
+            "t10k-images-idx3-ubyte.gz": base_url + "t10k-images-idx3-ubyte.gz",
+            "t10k-labels-idx1-ubyte.gz": base_url + "t10k-labels-idx1-ubyte.gz",
+        }
+        for filename, url in files.items():
+            download_file(url, os.path.join(data_dir, filename))
+
+        # Ler os arquivos IDX compactados do MNIST usando a função read_idx_gz para obter os arrays de imagens e rótulos para treino e teste
+        X_train = read_idx_gz(os.path.join(data_dir, "train-images-idx3-ubyte.gz"))
+        y_train = read_idx_gz(os.path.join(data_dir, "train-labels-idx1-ubyte.gz"))
+        X_test = read_idx_gz(os.path.join(data_dir, "t10k-images-idx3-ubyte.gz"))
+        y_test = read_idx_gz(os.path.join(data_dir, "t10k-labels-idx1-ubyte.gz"))
+
+    # Normalizar os dados de imagem para o intervalo [0, 1] e converter os rótulos para o tipo inteiro, preparando os dados para o treinamento do modelo MLP
+    X_train = X_train.reshape(-1, 28 * 28).astype(np.float32) / 255.0
+    X_test = X_test.reshape(-1, 28 * 28).astype(np.float32) / 255.0
     y_train = y_train.astype(np.int64)
     y_test = y_test.astype(np.int64)
-
     return X_train, X_test, y_train, y_test
 
 # Separar conjunto de validação a partir do conjunto de treino
