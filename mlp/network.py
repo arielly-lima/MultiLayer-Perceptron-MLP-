@@ -5,8 +5,14 @@ from .losses import cross_entropy
 # Classe para a rede neural MLP
 class NeuralNetwork:
     # Inicialização da rede com camadas especificadas
-    def __init__(self, layers, seed=None):
+    def __init__(self, layers, seed=None, optimizer="sgd", beta1=0.9, beta2=0.999, epsilon=1e-8):
         self.layers = layers
+        self.optimizer = optimizer.lower()
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.epsilon = epsilon
+        self.t = 0
+
         if seed is not None:
             np.random.seed(seed)
 
@@ -20,6 +26,12 @@ class NeuralNetwork:
             b = np.zeros((1, layers[i + 1]), dtype=np.float32)
             self.weights.append(W.astype(np.float32))
             self.biases.append(b)
+
+        if self.optimizer == "adam":
+            self.m_weights = [np.zeros_like(W) for W in self.weights]
+            self.v_weights = [np.zeros_like(W) for W in self.weights]
+            self.m_biases = [np.zeros_like(b) for b in self.biases]
+            self.v_biases = [np.zeros_like(b) for b in self.biases]
             
     # Propagação para frente da rede
     def forward(self, X):
@@ -51,19 +63,35 @@ class NeuralNetwork:
         # Número de amostras no batch (conjunto de treinamento)
         m = y_true.shape[0]
         dZ = self.activations[-1] - y_true
-        
+
+        if self.optimizer == "adam":
+            self.t += 1
+
         # Atualizar pesos e vieses para cada camada, começando da última para a primeira
         for i in reversed(range(len(self.weights))):
             A_prev = self.activations[i]
-            
+
             # Calcular gradientes para pesos e vieses
             dW = A_prev.T @ dZ / m
             # Gradiente para os vieses é a média dos gradientes de saída
             db = np.sum(dZ, axis=0, keepdims=True) / m
 
-            # Atualizar pesos e vieses usando o gradiente descendente
-            self.weights[i] -= lr * dW
-            self.biases[i] -= lr * db
+            if self.optimizer == "adam":
+                self.m_weights[i] = self.beta1 * self.m_weights[i] + (1 - self.beta1) * dW
+                self.v_weights[i] = self.beta2 * self.v_weights[i] + (1 - self.beta2) * (dW ** 2)
+                self.m_biases[i] = self.beta1 * self.m_biases[i] + (1 - self.beta1) * db
+                self.v_biases[i] = self.beta2 * self.v_biases[i] + (1 - self.beta2) * (db ** 2)
+
+                m_hat = self.m_weights[i] / (1 - self.beta1 ** self.t)
+                v_hat = self.v_weights[i] / (1 - self.beta2 ** self.t)
+                self.weights[i] -= lr * m_hat / (np.sqrt(v_hat) + self.epsilon)
+
+                m_hat_b = self.m_biases[i] / (1 - self.beta1 ** self.t)
+                v_hat_b = self.v_biases[i] / (1 - self.beta2 ** self.t)
+                self.biases[i] -= lr * m_hat_b / (np.sqrt(v_hat_b) + self.epsilon)
+            else:
+                self.weights[i] -= lr * dW
+                self.biases[i] -= lr * db
 
             # Para camadas ocultas, calcular o gradiente para a próxima camada usando a derivada da função de ativação ReLU
             if i > 0:

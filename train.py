@@ -1,10 +1,9 @@
 import os
 import time
 import numpy as np
-from sklearn.datasets import fetch_openml
-from sklearn.model_selection import train_test_split
 from mlp import NeuralNetwork
 from mlp.losses import cross_entropy
+from keras.datasets import mnist
 
 # Verificar se matplotlib está disponível para plotagem
 try:
@@ -17,28 +16,49 @@ except ImportError:
 # Função para converter rótulos inteiros em codificação one-hot
 def one_hot(labels, num_classes=10):
     encoded = np.zeros((labels.shape[0], num_classes), dtype=np.float32)
+    # Atribuir 1.0 na posição correspondente ao rótulo de cada amostra
     encoded[np.arange(labels.shape[0]), labels] = 1.0
     return encoded
 
-# Função para carregar o dataset MNIST, normalizar os dados e dividir em conjuntos de treinamento e teste
-def load_mnist(test_size=10000, random_state=42):
-    mnist = fetch_openml("mnist_784", version=1, as_frame=False)
-    X = mnist["data"].astype(np.float32) / 255.0
-    y = mnist["target"].astype(np.int64)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=test_size,
-        train_size=60000,
-        stratify=y,
-        random_state=random_state,
-    )
+# Função para carregar e pré-processar o dataset MNIST
+def load_mnist():
+
+    # Carrega o dataset MNIST via Keras
+    (X_train, y_train), (X_test, y_test) = mnist.load_data()
+
+    # Converter imagens 28x28 para vetores de 784 pixels
+    X_train = X_train.reshape(-1, 28 * 28).astype(np.float32)
+    X_test = X_test.reshape(-1, 28 * 28).astype(np.float32)
+
+    # Normalização dos pixels para o intervalo [0,1]
+    X_train /= 255.0
+    X_test /= 255.0
+
+    y_train = y_train.astype(np.int64)
+    y_test = y_test.astype(np.int64)
+
     return X_train, X_test, y_train, y_test
+
+# Separar conjunto de validação a partir do conjunto de treino
+def create_validation_split(
+    X_train,
+    y_train,
+    validation_size=5000
+):
+
+    X_val = X_train[-validation_size:]
+    y_val = y_train[-validation_size:]
+
+    X_train = X_train[:-validation_size]
+    y_train = y_train[:-validation_size]
+
+    return X_train, X_val, y_train, y_val
 
 # Gerador de batches para treinamento em mini-batches
 def batch_generator(X, y, batch_size=128):
     n = X.shape[0]
     perm = np.random.permutation(n)
+    # Gerar batches de dados embaralhados para treinamento
     for i in range(0, n, batch_size):
         indices = perm[i : i + batch_size]
         yield X[indices], y[indices]
@@ -124,11 +144,24 @@ def plot_history(history_list, labels, output_dir="results"):
 # Função principal para executar os experimentos de treinamento com diferentes configurações de camadas, taxa de aprendizado e número de épocas, avaliando o desempenho final do modelo em cada configuração
 def run_experiments():
     print("Carregando MNIST...")
+
     X_train, X_test, y_train, y_test = load_mnist()
 
+    # Separar conjunto de validação
+    X_train, X_val, y_train, y_val = create_validation_split(
+        X_train,
+        y_train,
+        validation_size=5000
+    )
+
+    # Converter rótulos para one-hot
     y_train_onehot = one_hot(y_train, num_classes=10)
+    y_val_onehot = one_hot(y_val, num_classes=10)
     y_test_onehot = one_hot(y_test, num_classes=10)
 
+    print(f"Treino: {X_train.shape}")
+    print(f"Validação: {X_val.shape}")
+    print(f"Teste: {X_test.shape}")
     experiments = [
         {
             "label": "config-1",
@@ -151,6 +184,14 @@ def run_experiments():
             "epochs": 20,
             "batch_size": 128,
         },
+        {
+            "label": "config-4-adam",
+            "layers": [784, 128, 64, 10],
+            "lr": 0.001,
+            "epochs": 20,
+            "batch_size": 128,
+            "optimizer": "adam",
+        },
     ]
 
     histories = []
@@ -158,17 +199,18 @@ def run_experiments():
     # Executar cada configuração de experimento, treinando o modelo e avaliando o desempenho final em termos de perda e acurácia no conjunto de teste
     for config in experiments:
         print("\n" + "=" * 60)
-        print(f"Treinando {config['label']} | camadas={config['layers']} lr={config['lr']}\n")
-        model = NeuralNetwork(config["layers"], seed=42)
+        print(f"Treinando {config['label']} | camadas={config['layers']} lr={config['lr']} optimizer={config.get('optimizer', 'sgd')}\n")
+        model = NeuralNetwork(
+            config["layers"],
+            seed=42,
+            optimizer=config.get("optimizer", "sgd"),
+        )
         history = train_model(
-            model,
-            X_train,
-            y_train_onehot,
-            X_test,
-            y_test_onehot,
-            epochs=config["epochs"],
-            lr=config["lr"],
-            batch_size=config["batch_size"],
+                model,
+                X_train,
+                y_train_onehot,
+                X_val,
+                y_val_onehot,
         )
         histories.append(history)
         test_loss, test_acc = model.evaluate(X_test, y_test_onehot)

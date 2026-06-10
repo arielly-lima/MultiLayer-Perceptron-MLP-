@@ -1,5 +1,3 @@
-# 📄 README.md — MLP do Zero (MNIST)
-
 # MLP - Classificação de Dígitos (MNIST)
 
 ## Visão geral do projeto
@@ -20,9 +18,9 @@ O projeto contempla a implementação de um Multi-Layer Perceptron do zero em Nu
 
 O objetivo do modelo é classificar imagens de dígitos manuscritos do dataset MNIST. Cada imagem possui dimensão 28×28 pixels e é convertida para um vetor de 784 entradas. O MLP aprende a associar padrões presentes nos pixels às classes de 0 a 9 por meio do ajuste iterativo dos pesos utilizando backpropagation e SGD. Ao final do treinamento, a camada de saída produz uma distribuição de probabilidade sobre as dez classes possíveis, e a classe com maior probabilidade é escolhida como predição.
 
-# 🚀 Como rodar o projeto
+#  Como rodar o projeto
 
-## 📦 Instalação
+##  Instalação
 
 ```bash
 pip install -r requirements.txt
@@ -30,17 +28,19 @@ pip install -r requirements.txt
 
 ---
 
-## ▶️ Treinamento
+##  Treinamento
 
 ```bash
 python train.py
 ```
 
-O `train.py` carrega o MNIST via `scikit-learn`, treina dois experimentos e salva gráficos em `results/`.
+O `train.py` carrega o MNIST via `keras.datasets.mnist` quando disponível; caso contrário, ele baixa e processa os arquivos IDX do MNIST diretamente. Treina quatro experimentos (incluindo uma experiência com Adam como comparação) e salva gráficos em `results/`.
 
 ---
 
-## 📊 Executar notebooks de análise
+##  Executar notebooks de análise
+Este notebook contem os testes feitos antes da implementacao do MLP do MINLIST, como teste do MLP que resolve o problema do XOR, que é.....
+
 
 ```bash
 jupyter notebook notebooks/experimentos.ipynb
@@ -48,9 +48,9 @@ jupyter notebook notebooks/experimentos.ipynb
 
 ---
 
-# 🧱 Arquitetura da rede
+#  Arquitetura da rede
 
-## 📌 Estrutura escolhida
+## Estrutura escolhida
 
 ```
 784 → 128 → 64 → 10
@@ -58,7 +58,7 @@ jupyter notebook notebooks/experimentos.ipynb
 
 ---
 
-## 📌 Justificativa das escolhas
+## Justificativa das escolhas
 
 - Por que escolheu esse número de camadas:
   - Duas camadas ocultas são suficientes para capturar a não linearidade do MNIST sem exagerar no número de parâmetros.
@@ -72,10 +72,11 @@ jupyter notebook notebooks/experimentos.ipynb
 - Por que usou Softmax na saída:
   - Softmax gera uma distribuição de probabilidade sobre as 10 classes.
   - É o padrão para classificação multiclasse, combinado com cross-entropy.
-
+- Explicar porque escolheu one-hot encoding n otreinamento
+- 
 ---
 
-## 📌 Visualização da rede
+##  Visualização da rede
 
 ```
 Entrada (784)
@@ -89,9 +90,9 @@ Saída (10 neurônios, Softmax)
 
 ---
 
-# ⚙️ Detalhes de implementação
+#  Detalhes de implementação
 
-## 📌 Inicialização dos pesos
+## Inicialização dos pesos
 - Explicar pq foi escolhido He para camadas ocultas e zeros para vieses
 
 - Método utilizado:
@@ -103,7 +104,7 @@ W ~ N(0, sqrt(2/n_in))
 
 ---
 
-## 📌 Forward pass
+## Forward pass
 
 - Como os dados passam pela rede:
   - Cada batch de entradas é propagado camada a camada.
@@ -120,7 +121,7 @@ W ~ N(0, sqrt(2/n_in))
 
 ---
 
-## 📌 Backpropagation
+## Backpropagation
 
 - Como o erro volta pela rede:
   - O erro começa na saída como diferença entre as probabilidades previstas e os rótulos one-hot.
@@ -148,7 +149,7 @@ A atualização final aplica-se em `W` e `b` com SGD.
 
 ---
 
-## 📌 Otimização
+## Otimização
 
 - Algoritmo usado: SGD
 - Learning rate:
@@ -160,18 +161,17 @@ A atualização final aplica-se em `W` e `b` com SGD.
 
 ---
 
-# 📉 Resultados
+# Resultados
 
-## 📌 Acurácia final
+## Acurácia final
 
 ```
 Treino: ~97.9% (configuração maior)
 Teste: 96.45% (config-1) e 96.93% (config-2)
 ```
-
 ---
 
-## 📌 Loss final
+## Loss final
 
 ```
 Loss final: ~0.12 para config-1
@@ -180,7 +180,7 @@ Loss final: ~0.10 para config-2
 
 ---
 
-## 📊 Curva de treinamento
+## Curva de treinamento
 
 > Gráficos gerados em `results/loss_comparacao.png` e `results/acc_comparacao.png`
 
@@ -189,7 +189,7 @@ Loss final: ~0.10 para config-2
 
 ---
 
-## 📌 Experimentos realizados
+## Experimentos realizados
 
 ### Experimento 1
 
@@ -200,27 +200,47 @@ Loss final: ~0.10 para config-2
 ---
 
 ### Experimento 2
+Foi testado a mudança na arquitera...
 
 - Arquitetura: `784 → 256 → 128 → 10`
-- Learning rate: `0.03`
+- Learning rate: `0.02`
 - Resultado: `test_acc = 96.93%`
 
 ---
+Foi testado a mudança no learning rate
 
+### Experimento 3
+
+- Arquitetura: `784 → 128 → 64 → 10`
+- Learning rate: `0.04`
+- Resultado: `test_acc = 98.6%`
+
+---
+### Experimento 4 (Adam)
+
+- Arquitetura: `784 → 128 → 64 → 10`
+- Otimizador: `Adam`
+- Learning rate: `0.001`
+- Resultado: `test_acc=0.9784`
+
+---
 ### Comparação
 
 | Modelo | Camadas | LR | Acurácia |
 |---|---|---|---|
 | config-1 | 784 → 128 → 64 → 10 | 0.02 | 96.45% |
 | config-2 | 784 → 256 → 128 → 10 | 0.03 | 96.93% |
+| config-4-adam | 784 → 128 → 64 → 10 | 0.001 (Adam) | a ser medido |
 
 ---
 
-# 🧠 Decisões e dificuldades (SEÇÃO MAIS IMPORTANTE)
+- Adicionar imagens de cada teste explicando a comparação
 
-## ❗ Decisão técnica mais difícil
+# Decisões e dificuldades (SEÇÃO MAIS IMPORTANTE)
 
-> A maior dificuldade foi balancear taxa de aprendizado e arquitetura para evitar divergência e instabilidade numérica.
+## Decisão técnica mais difícil
+
+> A maior dificuldade que enfrentei foi balancear taxa de aprendizado e arquitetura para evitar divergência e instabilidade numérica, mantendo uma boa acurácia, não apenas no treinamento, mas também no teste.
 
 - O que foi difícil decidir:
   - Se usar uma taxa de aprendizado mais alta para treinar mais rápido ou mais baixa para garantir estabilidade.
@@ -232,7 +252,7 @@ Loss final: ~0.10 para config-2
 
 ---
 
-## ❗ O que não funcionou
+## O que não funcionou
 
 - Inicialização errada dos pesos:
   - Pesos grandes fizeram os logits saturarem e o softmax produzir valores instáveis.
@@ -252,7 +272,7 @@ Loss final: ~0.10 para config-2
 
 ---
 
-## ❗ O que faria diferente
+## O que faria diferente
 
 - Usar Adam no lugar de SGD para convergência mais rápida, acredito que usando isso o teste seria melhor....
 - Implementar batch normalization para melhorar estabilidade.
@@ -261,24 +281,11 @@ Loss final: ~0.10 para config-2
 
 ---
 
-# 🔬 Validação dos gradientes (OPCIONAL TOP NOTA)
-
-## 📌 Gradient check
-
-O gradiente representa a taxa de variação da função de perda em relação a cada parâmetro da rede. Durante o backpropagation, os gradientes são calculados utilizando a regra da cadeia e indicam como cada peso contribuiu para o erro final. Esses valores são então utilizados pelo algoritmo de otimização (SGD) para atualizar os pesos na direção que reduz a loss.
-
-- O foco foi validar a implementação pelo comportamento de treino e pelos resultados no MNIST.
-- Em um gradient check, usaríamos:
-
-```
-(f(x+ε) - f(x-ε)) / (2ε)
-```
-
-- Erro máximo encontrado: não calculado.
+#  Validação dos gradientes (OPCIONAL TOP NOTA)
 
 ---
 
-# 🚀 Critério de sucesso
+#  Critério de sucesso
 
 - Forward genérico funcionando
 - Backprop correto
@@ -290,12 +297,3 @@ O gradiente representa a taxa de variação da função de perda em relação a 
 
 ---
 
-Se quiser, no próximo passo eu posso te ajudar a:
-
-🔥 montar as **‘Decisões e dificuldades’ reais baseadas no seu código atual**
-
-ou
-
-📊 te ajudar a garantir **92% de accuracy ajustando arquitetura + learning rate + batch size**
-
-Só me fala o próximo passo.

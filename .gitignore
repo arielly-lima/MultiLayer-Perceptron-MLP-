@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+
+# Data
+data/
+
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Package distribution
+*.egg-info/
+build/
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
