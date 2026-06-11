@@ -6,7 +6,7 @@ def relu(x):
 
 # Derivada da ReLU para retropropagação
 def relu_derivative(x):
-    return (x > 0).astype(float)
+    return (x > 0).astype(np.float32)
 
 
 # Função softmax para a camada de saída - gerar probabilidades

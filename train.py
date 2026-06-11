@@ -65,6 +65,8 @@ def load_mnist(test_size=10000, random_state=42):
             "t10k-images-idx3-ubyte.gz": base_url + "t10k-images-idx3-ubyte.gz",
             "t10k-labels-idx1-ubyte.gz": base_url + "t10k-labels-idx1-ubyte.gz",
         }
+        
+        # Baixar os arquivos do MNIST se não estiverem presentes localmente
         for filename, url in files.items():
             download_file(url, os.path.join(data_dir, filename))
 
@@ -117,6 +119,7 @@ def train_model(
     lr=0.03,
     batch_size=128,
 ):
+    # Dicionário para armazenar o histórico de perda e acurácia durante o treinamento, permitindo a análise do desempenho do modelo ao longo das épocas
     history = {
         "train_loss": [],
         "train_acc": [],
@@ -124,15 +127,19 @@ def train_model(
         "val_acc": [],
     }
 
+    # Loop de treinamento principal, iterando por um número definido de épocas, realizando a passagem forward e backward para cada batch de dados, e avaliando o desempenho do modelo no conjunto de treino e validação ao final de cada época
     for epoch in range(1, epochs + 1):
+        # Medir o tempo gasto para cada época para monitorar a eficiência do treinamento
         start = time.time()
         for X_batch, y_batch in batch_generator(X_train, y_train, batch_size):
             model.forward(X_batch)
             model.backward(y_batch, lr=lr)
 
+        # Avaliar a perda e a acurácia do modelo no conjunto de treino e validação ao final de cada época, armazenando os resultados no histórico para análise posterior
         train_loss, train_acc = model.evaluate(X_train, y_train)
         val_loss, val_acc = model.evaluate(X_val, y_val)
 
+        # Armazenar os resultados de perda e acurácia para treino e validação no histórico, permitindo a visualização do desempenho do modelo ao longo das épocas
         history["train_loss"].append(train_loss)
         history["train_acc"].append(train_acc)
         history["val_loss"].append(val_loss)
@@ -146,6 +153,7 @@ def train_model(
             f"{elapsed:.1f}s"
         )
 
+        # Verificar se a perda divergiu para NaN ou infinito, interrompendo o treinamento se isso ocorrer para evitar desperdício de tempo em experimentos que não estão convergindo
         if not np.isfinite(train_loss) or not np.isfinite(val_loss):
             print("Perda divergiu para NaN/inf; interrompendo o treinamento deste experimento.")
             break
@@ -252,6 +260,7 @@ def run_experiments():
             seed=42,
             optimizer=config.get("optimizer", "sgd"),
         )
+        # Treinar o modelo com a configuração atual e armazenar o histórico de perda e acurácia para análise posteriorvaliar o desempenho final do modelo no conjunto de teste e armazenar os resultados para comparação entre as diferentes configurações
         history = train_model(
             model,
             X_train,

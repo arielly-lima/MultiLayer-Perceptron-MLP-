@@ -1,6 +1,7 @@
 import numpy as np
 from .activations import relu, relu_derivative, softmax
 from .losses import cross_entropy
+from .optimizers import sgd, adam
 
 # Classe para a rede neural MLP
 class NeuralNetwork:
@@ -77,21 +78,21 @@ class NeuralNetwork:
             db = np.sum(dZ, axis=0, keepdims=True) / m
 
             if self.optimizer == "adam":
-                self.m_weights[i] = self.beta1 * self.m_weights[i] + (1 - self.beta1) * dW
-                self.v_weights[i] = self.beta2 * self.v_weights[i] + (1 - self.beta2) * (dW ** 2)
-                self.m_biases[i] = self.beta1 * self.m_biases[i] + (1 - self.beta1) * db
-                self.v_biases[i] = self.beta2 * self.v_biases[i] + (1 - self.beta2) * (db ** 2)
-
-                m_hat = self.m_weights[i] / (1 - self.beta1 ** self.t)
-                v_hat = self.v_weights[i] / (1 - self.beta2 ** self.t)
-                self.weights[i] -= lr * m_hat / (np.sqrt(v_hat) + self.epsilon)
-
-                m_hat_b = self.m_biases[i] / (1 - self.beta1 ** self.t)
-                v_hat_b = self.v_biases[i] / (1 - self.beta2 ** self.t)
-                self.biases[i] -= lr * m_hat_b / (np.sqrt(v_hat_b) + self.epsilon)
+                self.weights[i], self.m_weights[i], self.v_weights[i] = adam(
+                    self.weights[i], dW,
+                    self.m_weights[i], self.v_weights[i],
+                    self.t, lr,
+                    beta1=self.beta1, beta2=self.beta2, epsilon=self.epsilon,
+                )
+                self.biases[i], self.m_biases[i], self.v_biases[i] = adam(
+                    self.biases[i], db,
+                    self.m_biases[i], self.v_biases[i],
+                    self.t, lr,
+                    beta1=self.beta1, beta2=self.beta2, epsilon=self.epsilon,
+                )
             else:
-                self.weights[i] -= lr * dW
-                self.biases[i] -= lr * db
+                self.weights[i] = sgd(self.weights[i], dW, lr)
+                self.biases[i] = sgd(self.biases[i], db, lr)
 
             # Para camadas ocultas, calcular o gradiente para a próxima camada usando a derivada da função de ativação ReLU
             if i > 0:
